@@ -7,142 +7,148 @@
 # email :string(255)
 # created_at :datetime
 # updated_at :datetime
+# encrypted_password :string(255)
+# salt :string(255)
+# admin :boolean default(FALSE)
 #
 
 require 'spec_helper'
 
 describe User do
+
   before(:each) do
     @attr = {
-      :name => "Example User",
-      :email => "user@example.com",
-      :password => "foobar",
-      :password_confirmation => "foobar"
+      :name => 'Example User',
+      :email => 'user@example.com',
+      :password => 'foobar',
+      :password_confirmation => 'foobar'
     }
   end
 
-  it "should create a new instance given valid attributes" do
+  it 'should create a new instance given valid attributes' do
     User.create!(@attr)
   end
 
-  it "should create a new instance given valid attributes" do
-    User.create!(@attr)
-  end
-
-  it "should require a name" do
-    no_name_user = User.new(@attr.merge(:name => ""))
+  it 'should require a name' do
+    no_name_user = User.new(@attr.merge( :name => '' ))
     no_name_user.should_not be_valid
   end
 
-  it "should require an email address" do
-    no_email_user = User.new(@attr.merge(:email => ""))
+  it 'should requre an email address' do
+    no_email_user = User.new(@attr.merge( :email => '' ))
     no_email_user.should_not be_valid
   end
 
-  it "should reject names that are too long" do
-    long_name = "a" * 51
-    long_name_user = User.new(@attr.merge(:name => long_name))
+  it 'should reject names that are too long' do
+    long_name = 'a' * 51
+    long_name_user = User.new(@attr.merge( :name => long_name ))
     long_name_user.should_not be_valid
   end
 
-  it "should accept valid email addresses" do
-    addresses = %w[user@foo.com THE_USER@foo.bar.org first.last@foo.jp]
+  it 'should accept valid email addresses' do
+    addresses = %w[ user@foo.com example_user@foo.bar.org first.last@foo.jp ]
     addresses.each do |address|
-      valid_email_user = User.new(@attr.merge(:email => address))
+      valid_email_user = User.new( @attr.merge( :email => address ))
       valid_email_user.should be_valid
     end
   end
 
-  it "should reject invalid email addresses" do
-    addresses = %w[user@foo,com user_at_foo.org example.user@foo.]
+  it 'should reject invalid email addresses' do
+    addresses = %w[ user@foo,com user_at_foo.org user@foo. ]
     addresses.each do |address|
-      invalid_email_user = User.new(@attr.merge(:email => address))
+      invalid_email_user = User.new( @attr.merge( :email => address ))
       invalid_email_user.should_not be_valid
     end
   end
 
-  it "should reject duplicate email addresses" do
-    # Put a user with given email address into the database.
+  it 'should reject duplicate email addresses' do
+    # Create a user record with given email address
     User.create!(@attr)
-    user_with_duplicate_email = User.new(@attr)
-    user_with_duplicate_email.should_not be_valid
+    duplicate_email_user = User.new(@attr)
+    duplicate_email_user.should_not be_valid
   end
 
-  it "should reject email addresses identical up to case" do
+  it 'should reject emails identical up to case' do
     upcased_email = @attr[:email].upcase
-    User.create!(@attr.merge(:email => upcased_email))
-    user_with_duplicate_email = User.new(@attr)
-    user_with_duplicate_email.should_not be_valid
+    User.create(@attr.merge( :email => upcased_email ))
+    duplicate_email_user = User.new(@attr)
+    duplicate_email_user.should_not be_valid
   end
 
- describe "password validations" do
 
-    it "should require a password" do
-      User.new(@attr.merge(:password => "", :password_confirmation => "")).
+  describe 'password validations' do
+
+    it 'should require a password' do
+      User.new(@attr.merge( :password => '', :password_confirmation => '')).
         should_not be_valid
     end
 
-    it "should require a matching password confirmation" do
-      User.new(@attr.merge(:password_confirmation => "invalid")).
+    it 'should require a valid matching password' do
+      User.new(@attr.merge( :password_confirmation => 'invalid' )).
         should_not be_valid
     end
 
-    it "should reject short passwords" do
-      short = "a" * 5
-      hash = @attr.merge(:password => short, :password_confirmation => short)
-      User.new(hash).should_not be_valid
+    it 'should reject short passwords' do
+      short_password = 'a' * 5
+      User.new(@attr.merge( :password => short_password,
+                            :password_confirmation => short_password)).
+        should_not be_valid
     end
 
-    it "should reject long passwords" do
-      long = "a" * 41
-      hash = @attr.merge(:password => long, :password_confirmation => long)
-      User.new(hash).should_not be_valid
+    it 'should reject long passwords' do
+      long_password = 'a' * 41
+      User.new(@attr.merge( :password => long_password,
+                            :password_confirmation => long_password)).
+        should_not be_valid
     end
   end
 
-  describe "password encryption" do
+  describe 'password encryption' do
 
     before(:each) do
       @user = User.create!(@attr)
     end
 
-    it "should have an encrypted password attribute" do
+    it 'should have an encrypted password attribute' do
       @user.should respond_to(:encrypted_password)
     end
 
-    it "should set the encrypted password" do
+    it 'should set the encrypted password' do
       @user.encrypted_password.should_not be_blank
     end
 
-   describe "has_password? method" do
+    describe 'has_password? method' do
 
-      it "should be true if the passwords match" do
+      it 'should be true if the passwords match' do
         @user.has_password?(@attr[:password]).should be_true
       end
 
       it "should be false if the passwords don't match" do
-        @user.has_password?("invalid").should be_false
+        @user.has_password?('invalid').should be_false
       end
+    end
 
-   describe "authenticate method" do
+    describe 'authenticate method' do
 
-      it "should return nil on email/password mismatch" do
-        wrong_password_user = User.authenticate(@attr[:email], "wrongpass")
+      it 'should return nil on user/password mismatch' do
+        wrong_password_user = User.authenticate(@attr[:email],
+                                                'wrong_password')
         wrong_password_user.should be_nil
       end
 
-      it "should return nil for an email address with no user" do
-        nonexistent_user = User.authenticate("bar@foo.com", @attr[:password])
+      it 'should return nil for na email with no associated user' do
+        nonexistent_user = User.authenticate('bar@foo.com', @attr[:password])
         nonexistent_user.should be_nil
       end
 
-      it "should return the user on email/password match" do
-        matching_user = User.authenticate(@attr[:email], @attr[:password])
-        matching_user.should == @user
+      it 'should return a matching user given valid credentials' do
+              matching_user = User.authenticate(@attr[:email],
+                                                @attr[:password])
+              matching_user.should == @user
       end
     end
   end
-end
+
   describe "admin attribute" do
 
     before(:each) do
@@ -153,7 +159,7 @@ end
       @user.should respond_to(:admin)
     end
 
-    it "should not be an admin by default" do
+    it "should not be and admin by default" do
       @user.should_not be_admin
     end
 
@@ -185,22 +191,22 @@ end
         Micropost.find_by_id(micropost.id).should be_nil
       end
     end
-    
+
     describe "status feed" do
 
       it "should have a feed" do
         @user.should respond_to(:feed)
       end
 
-      it "should include the user's microposts" do
-        @user.feed.include?(@mp1).should be_true
-        @user.feed.include?(@mp2).should be_true
+      it "should have the user's microposts" do
+        @user.feed.should include(@mp1)
+        @user.feed.should include(@mp2)
       end
 
       it "should not include a different user's microposts" do
         mp3 = Factory(:micropost,
                       :user => Factory(:user, :email => Factory.next(:email)))
-        @user.feed.include?(mp3).should be_false
+        @user.feed.should_not include(mp3)
       end
     end
   end
