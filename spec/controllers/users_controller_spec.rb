@@ -18,7 +18,7 @@ describe UsersController do
       before(:each) do
         @user = test_sign_in(Factory(:user))
         second = Factory(:user, :name => "Bob", :email => "another@example.com")
-        third  = Factory(:user, :name => "Ben", :email => "another@example.net")
+        third = Factory(:user, :name => "Ben", :email => "another@example.net")
 
         @users = [@user, second, third]
         30.times do
@@ -85,6 +85,14 @@ describe UsersController do
       get :show, :id => @user
       response.should have_selector("h1>img", :class => "gravatar")
     end
+   
+    it "should show the user's microposts" do
+      mp1 = Factory(:micropost, :user => @user, :content => "Foo bar")
+      mp2 = Factory(:micropost, :user => @user, :content => "Baz quux")
+      get :show, :id => @user
+      response.should have_selector("span.content", :content => mp1.content)
+      response.should have_selector("span.content", :content => mp2.content)
+    end
   end
 
   describe "GET 'new'" do
@@ -141,12 +149,12 @@ describe UsersController do
       it "should redirect to the user show page" do
         post :create, :user => @attr
         response.should redirect_to(user_path(assigns(:user)))
-      end  
+      end
       
       it "should sign the user in" do
         post :create, :user => @attr
         controller.should be_signed_in
-      end  
+      end
 
   it "should have a welcome message" do
     post :create, :user => @attr
@@ -235,7 +243,7 @@ describe "GET 'edit'" do
       it "should change the user's attributes" do
         put :update, :id => @user, :user => @attr
         @user.reload
-        @user.name.should  == @attr[:name]
+        @user.name.should == @attr[:name]
         @user.email.should == @attr[:email]
       end
 
