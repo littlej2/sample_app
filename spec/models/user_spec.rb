@@ -269,5 +269,14 @@ describe User do
       @user.follow!(@followed)
       @followed.followers.should include(@user)
     end
+
+    it "should destroy associated relationships" do
+      u1 = @user.follow!(@followed)
+      u2 = @followed.follow!(@user)
+      @user.destroy
+      [u1, u2].each do |relationship|
+        Relationship.find_by_followed_id(relationship.followed_id).should be_nil
+      end
+    end
   end
 end

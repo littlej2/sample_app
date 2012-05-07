@@ -198,7 +198,7 @@ describe User do
         @user.should respond_to(:feed)
       end
 
-      it "should have the user's microposts" do
+      it "should include the user's microposts" do
         @user.feed.should include(@mp1)
         @user.feed.should include(@mp2)
       end
@@ -207,6 +207,13 @@ describe User do
         mp3 = Factory(:micropost,
                       :user => Factory(:user, :email => Factory.next(:email)))
         @user.feed.should_not include(mp3)
+      end
+
+      it "should include the microposts of followed users" do
+        followed = Factory(:user, :email => Factory.next(:email))
+        mp3 = Factory(:micropost, :user => followed)
+        @user.follow!(followed)
+        @user.feed.should include(mp3)
       end
     end
   end
@@ -261,6 +268,15 @@ describe User do
     it "should include the follower in the followers array" do
       @user.follow!(@followed)
       @followed.followers.should include(@user)
+    end
+
+    it "should destroy associated relationships" do
+      u1 = @user.follow!(@followed)
+      u2 = @followed.follow!(@user)
+      @user.destroy
+      [u1, u2].each do |micropost|
+        Relationship.find_by_followed_id(relationship.followed_id).should be_nil
+      end
     end
   end
 end
