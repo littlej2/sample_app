@@ -51,16 +51,16 @@ class UsersController < ApplicationController
     end
   end
 
-  def destroy
-    user = User.find(params[:id])
-    if not current_user?(user)
-      user.destroy
-      flash[:success] = "User destroyed"
-    else
-      flash[:error] = "You can't delete yourself"
-    end
-    redirect_to(users_path)
+def destroy
+  if current_user == User.find(params[:id])
+    flash[:notice] = "Self destruction is not allowed."
+  else
+    User.find(params[:id]).destroy
+    flash[:success] = "User destroyed."
   end
+  redirect_to users_path
+end
+
 
   private
 
